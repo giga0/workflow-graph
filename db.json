@@ -1,0 +1,91 @@
+{
+  "steps": [
+    {
+      "id": 5,
+      "name": "done",
+      "isBackward": false,
+      "position": "LAST"
+    },
+    {
+      "id": 2,
+      "name": "finished",
+      "isBackward": false,
+      "position": "MIDDLE"
+    },
+    {
+      "id": 3,
+      "name": "ready to proofread",
+      "isBackward": false,
+      "position": "MIDDLE"
+    },
+    {
+      "id": 4,
+      "name": "ready to validate",
+      "isBackward": false,
+      "position": "MIDDLE"
+    },
+    {
+      "id": 1,
+      "name": "ready to write",
+      "isBackward": false,
+      "position": "FIRST"
+    },
+    {
+      "id": 42,
+      "name": "rework asked",
+      "isBackward": true,
+      "position": "MIDDLE"
+    }
+  ],
+  "moves": [
+    {
+      "id": 1,
+      "name": "approve",
+      "isBackward": false,
+      "from": { "id": 3, "name": "ready to proofread" },
+      "to": { "id": 4, "name": "ready to validate" }
+    },
+    {
+      "id": 2,
+      "name": "disapprove",
+      "isBackward": true,
+      "from": { "id": 3, "name": "ready to proofread" },
+      "to": { "id": 42, "name": "rework asked" }
+    },
+    {
+      "id": 3,
+      "name": "invalidate",
+      "isBackward": true,
+      "from": { "id": 4, "name": "ready to validate" },
+      "to": { "id": 42, "name": "rework asked" }
+    },
+    {
+      "id": 4,
+      "name": "Mark as finished",
+      "isBackward": false,
+      "from": { "id": 1, "name": "ready to write" },
+      "to": { "id": 2, "name": "finished" }
+    },
+    {
+      "id": 5,
+      "name": "Mark as reworked",
+      "isBackward": false,
+      "from": { "id": 42, "name": "rework asked" },
+      "to": { "id": 2, "name": "finished" }
+    },
+    {
+      "id": 6,
+      "name": "Mark for proofread",
+      "isBackward": false,
+      "from": { "id": 2, "name": "finished" },
+      "to": { "id": 3, "name": "ready to proofread" }
+    },
+    {
+      "id": 7,
+      "name": "validate",
+      "isBackward": false,
+      "from": { "id": 4, "name": "ready to validate" },
+      "to": { "id": 5, "name": "done" }
+    }
+  ]
+}

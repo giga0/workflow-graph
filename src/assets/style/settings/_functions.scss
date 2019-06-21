@@ -1,0 +1,14 @@
+@function calculatePercent($target, $container) {
+	@return ($target / $container) * 100%;
+}
+@function calculateTracking($ps-tracking) {
+	$emTracking: $ps-tracking/1000;
+	@return #{$emTracking}em;
+}
+@function calculateVw($target, $container) {
+	@return ($target / $container) * 100vw;
+}
+@function calculateRem($size) {
+	$remSize: $size / $base-font-size; 
+	@return #{$remSize}rem; 
+}

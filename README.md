@@ -1,29 +1,31 @@
 # workflow-graph
 
-## Project setup
+### Project setup
 ```
 yarn install
 ```
 
 ### Compiles and hot-reloads for development
 ```
-yarn run serve
+yarn serve
 ```
 
-### Compiles and minifies for production
+### App uses JSON Server for fake API so it needs to be installed
 ```
-yarn run build
-```
-
-### Run your tests
-```
-yarn run test
+yarn add json-server
 ```
 
-### Lints and fixes files
+### In the root folder of the app you will find db.json file, so to run server type:
 ```
-yarn run lint
+json-server db.json
 ```
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+### Technologies used
+- Webpack
+- Vue
+- Axios
+- JSON Server
+
+### Introduction
+This app is used to draw the workflow graph fetched from API.
+Currently app uses fake JSON Server for REST API for test purposes but in future will be connected with GraphQL API using Apollo.

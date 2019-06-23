@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <div v-if="workflow.length" class="workflow-graph workflow-graph--forward-main">
+    <div v-if="!isMobile && workflow.length" class="workflow-graph workflow-graph--forward-main">
       <div v-for="(item, index) in workflow"
         :key="`${item.type}_${item.id}-${index}`"
         :ref="`${item.type}_${item.id}`"
@@ -13,14 +13,17 @@
         <div class="workflow-graph workflow-graph--backward">
           <div v-for="(backItem, index) in item.backwardFlow"
             :key="`${backItem.type}_${backItem.id}-${index}`"
-            :style="{ top: `calc(18rem * (${index} + 1) - 2px)` }"
-            :class="[ backItem.type === 'step' ? 'step' : 'move' ]"
+            :style="backwardStyle(backItem.type)"
+            :class="[ backItem.type === 'step' ? 'step' : 'move',
+              backItem.type === 'move' && backItem.isBackward ? 'move--back' : false ]"
             class="flow-item flow-item--backward">
             <span>{{ backItem.name }}</span>
+            <div v-if="backItem.type === 'step'" id="after-clone"></div>
           </div>
         </div>
       </div>
     </div>
+    <div v-if="isMobile" class="workflow-graph--warning">Sorry, but you will need a bigger screen to see workflow graph.</div>
   </div>
 </template>
 
@@ -34,6 +37,7 @@ export default {
   name: 'app',
   data() {
     return {
+      isMobile: false,
       steps: [],
       moves: []
     }
@@ -47,12 +51,10 @@ export default {
       else return false
       steps = steps.filter(stp => stp.id !== workflow[0].id)
       for (let i = steps.length; i >= steps.length; i--) {
-        // console.warn('CHECK: ', steps.length, i)
         if (!steps.length) break
         // eslint-disable-next-line
         for (let step of steps) {
           let lastItem = workflow[workflow.length - 1]
-          // console.log('stepsLoop, lastItem: ', lastItem)
           if (lastItem.type === 'move') {
             let moveGoesTo = get(lastItem, 'to.id')
             let foundStep = steps.find(stp => stp.id === moveGoesTo)
@@ -74,26 +76,18 @@ export default {
                 lastStep.backwardFlow.push(reworkStep)
                 moves = moves.filter(mv => mv.id !== move.id)
                 steps = steps.filter(step => step.id !== 42)
-                // console.log(steps)
-                // console.log('movesLoop, lastStep: ', lastStep)
               } else if (get(move, 'from.id') === lastStep.id) {
-                // console.log('movesLoop, lastStep: ', lastStep)
-                // console.log('movesLoop, move: ', move)
                 if (!move.isBackward) {
                   workflow.push(move)
                 } else {
                   lastStep.backwardFlow.push(move)
-                  // console.log(workflow)
                 }
                 moves = moves.filter(mv => mv.id !== move.id)
               }
             }
           }
         }
-        // console.log(steps.length)
       }
-      // console.log(steps.length)
-      // console.log(moves.length)
       return workflow
     }
   },
@@ -102,6 +96,24 @@ export default {
       let firstStep = steps.find(step => step.position === "FIRST")
       firstStep.type = 'step'
       return firstStep
+    },
+    backwardStyle (type) {
+      if (type === 'step') {
+        return { top: 'calc(32rem - 2px)' }
+      } else {
+        return { top: 'calc(18rem - 2px)' }
+      }
+    },
+    renderAfterClone (el) {
+      const html = document.getElementsByTagName('html')[0]
+      const htmlFontSize = parseFloat(window.getComputedStyle(html).fontSize).toFixed(2)
+      const backStep = document.querySelectorAll('.flow-item--backward.step')[0]
+      const stepsWithBack = document.querySelectorAll('.step.has-backward')
+      const lastStepWithBack = stepsWithBack[stepsWithBack.length - 1]
+      const backStepPosRight = Math.round(backStep.getBoundingClientRect().right)
+      const lastStepWithBackPosCenter = Math.round(lastStepWithBack.getBoundingClientRect().left + lastStepWithBack.getBoundingClientRect().width / 2)
+      const calcWidth = (lastStepWithBackPosCenter - backStepPosRight) / htmlFontSize
+      el.style.cssText = `width: ${calcWidth}rem; right: calc(-${calcWidth}rem + -2px);`
     }
   },
   created () {
@@ -127,6 +139,13 @@ export default {
         console.error(err)
         return Promise.reject(err)
       })
+  },
+  mounted () {
+    if (window.innerWidth < 768) this.isMobile = true
+  },
+  updated () {
+    const afterClone = document.getElementById('after-clone')
+    if (afterClone) this.renderAfterClone(afterClone)
   }
 }
 </script>
@@ -139,9 +158,6 @@ export default {
   @include fontSizeRem(10, 14);
 }
 .workflow-graph {
-  // position: absolute;
-  // top: 50%;
-  // transform: translateY(-50%);
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -150,6 +166,14 @@ export default {
   &--backward {
     flex-direction: column;
     padding: 0;
+  }
+  &--warning {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 100%;
+    color: $red;
+    text-align: center;
   }
 }
 .flow-item {
@@ -174,8 +198,33 @@ export default {
   }
   &--backward {
     position: absolute;
-    &:after {
-      content: none;
+    &.move {
+      &:after {
+        top: auto;
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: calc(-13rem + -4px);
+        width: 4px;
+        height: calc(13rem + 4px);
+      }
+      &--back {
+        color: $white;
+        background-color: $red;
+      }
+    }
+    &.step {
+      color: $white;
+      background-color: $blue;
+      &:after {
+        content: none;
+      }
+      #after-clone {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        height: 4px;
+        background-color: $darkgrey;
+      }
     }
   }
   span {
@@ -186,11 +235,11 @@ export default {
   height: 10rem;
   border-radius: 50%;
   &--first {
-    color: $white;
-    background-color: $green;
-    border: 2px solid $green;
+    background-color: $yellow;
   }
   &--last {
+    color: $white;
+    background-color: $green;
     &:after {
       content: none;
     }

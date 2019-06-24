@@ -10,7 +10,8 @@
           item.backwardFlow && item.backwardFlow.length ? 'has-backward' : false ]"
         class="flow-item">
         <span>{{ item.name }}</span>
-        <div class="workflow-graph workflow-graph--backward">
+        <div v-if="item.position !== 'LAST'" class="arrow"></div>
+        <div v-if="item.backwardFlow && item.backwardFlow.length" class="workflow-graph workflow-graph--backward">
           <div v-for="(backItem, index) in item.backwardFlow"
             :key="`${backItem.type}_${backItem.id}-${index}`"
             :style="backwardStyle(backItem.type)"
@@ -18,6 +19,8 @@
               backItem.type === 'move' && backItem.isBackward ? 'move--back' : false ]"
             class="flow-item flow-item--backward">
             <span>{{ backItem.name }}</span>
+            <div class="arrow arrow--first"></div>
+            <div class="arrow arrow--second"></div>
             <div v-if="backItem.type === 'step'" id="after-clone"></div>
           </div>
         </div>
@@ -69,13 +72,13 @@ export default {
             for (let move of moves) {
               move.type = 'move'
               // case for specific 'finished' step
-              if (lastStep.id === 2 && get(move, 'from.id') === 42 && get(move, 'to.id') === 2) {
+              if (lastStep.name === 'finished' && get(move, 'from.name') === 'rework asked' && get(move, 'to.name') === 'finished') {
                 lastStep.backwardFlow.push(move)
-                let reworkStep = steps.find(stp => stp.id === 42)
+                let reworkStep = steps.find(stp => stp.name === 'rework asked')
                 reworkStep.type = 'step'
                 lastStep.backwardFlow.push(reworkStep)
                 moves = moves.filter(mv => mv.id !== move.id)
-                steps = steps.filter(step => step.id !== 42)
+                steps = steps.filter(step => step.name !== 'rework asked')
               } else if (get(move, 'from.id') === lastStep.id) {
                 if (!move.isBackward) {
                   workflow.push(move)
@@ -113,7 +116,7 @@ export default {
       const backStepPosRight = Math.round(backStep.getBoundingClientRect().right)
       const lastStepWithBackPosCenter = Math.round(lastStepWithBack.getBoundingClientRect().left + lastStepWithBack.getBoundingClientRect().width / 2)
       const calcWidth = (lastStepWithBackPosCenter - backStepPosRight) / htmlFontSize
-      el.style.cssText = `width: ${calcWidth}rem; right: calc(-${calcWidth}rem + -2px);`
+      el.style.cssText = `width: calc(${calcWidth}rem + 3px); right: calc(-${calcWidth}rem - 3px);`
     }
   },
   created () {
@@ -190,10 +193,10 @@ export default {
     content: "";
     position: absolute;
     top: 50%;
-    right: calc(-8rem + -2px);
+    right: -8rem;
     transform: translateY(-50%);
     width: 8rem;
-    height: 4px;
+    height: 2px;
     background-color: $darkgrey;
   }
   &--backward {
@@ -203,13 +206,42 @@ export default {
         top: auto;
         left: 50%;
         transform: translateX(-50%);
-        bottom: calc(-13rem + -4px);
-        width: 4px;
-        height: calc(13rem + 4px);
+        bottom: calc(-8rem - 2px);
+        width: 2px;
+        height: calc(8rem - 2px);
+      }
+      .arrow {
+        left: 50%;
+        transform: translateX(-50%);
+        border-width: 0rem 1rem 2rem 1rem;
+        border-color: transparent transparent $darkgrey transparent;
+        &--first {
+          top: calc(-8rem - 3px);
+        }
+        &--second {
+          top: calc(6rem - 2px);
+        }
       }
       &--back {
         color: $white;
         background-color: $red;
+        &:after {
+          bottom: calc(-13rem + 2px);
+          height: calc(13rem - 2px);
+        }
+        .arrow {
+          top: auto;
+          left: 50%;
+          transform: translateX(-50%);
+          border-width: 2rem 1rem 1rem 1rem;
+          border-color: $darkgrey transparent transparent transparent;
+          &--first {
+            bottom: calc(5rem - 2px);
+          }
+          &--second {
+            bottom: calc(-14rem - 1px);
+          }
+        }
       }
     }
     &.step {
@@ -218,17 +250,33 @@ export default {
       &:after {
         content: none;
       }
+      .arrow {
+        right: calc(-2rem - 2px);
+        border-width: 1rem 2rem 1rem 0;
+        border-color: transparent $darkgrey transparent transparent;
+      }
       #after-clone {
         position: absolute;
         top: 50%;
         transform: translateY(-50%);
-        height: 4px;
+        height: 2px;
         background-color: $darkgrey;
       }
     }
   }
   span {
     position: absolute;
+  }
+  .arrow {
+    position: absolute;
+    top: 50%;
+    right: calc(-8rem - 2px);
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 1rem 0 1rem 2rem;
+    border-color: transparent transparent transparent $darkgrey;
   }
 }
 .step {
@@ -248,8 +296,8 @@ export default {
     &:before {
       content: "";
       position: absolute;
-      bottom: calc(-8rem + -2px);
-      width: 4px;
+      bottom: calc(-8rem - 2px);
+      width: 2px;
       height: 8rem;
       background-color: $darkgrey;
     }
